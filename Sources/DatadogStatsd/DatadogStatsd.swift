@@ -28,67 +28,35 @@ public struct DatadogStatsd {
     }
 
     //
-    public func increment(_ name: String, by value: Int = 1, params: DatadogStatsdCountMessage.Params = []) throws {
-        return try self.count(name, value, params: params)
-    }
-    public func increment(_ name: String, by value: Int = 1, sampleRate: Double) throws {
-        DatadogStatsdMessageHelper.assertMetricSampleRate(sampleRate)
-        return try self.increment(name, by: value, params: [.sampleRate(sampleRate)])
+    public func increment(_ name: String, by value: Int = 1, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
+        return try self.count(name, value, params)
     }
 
-    public func decrement(_ name: String, by value: Int = 1, params: DatadogStatsdCountMessage.Params = []) throws {
-        return try self.count(name, -value, params: params)
-    }
-    public func decrement(_ name: String, by value: Int = 1, sampleRate: Double) throws {
-        DatadogStatsdMessageHelper.assertMetricSampleRate(sampleRate)
-        return try self.decrement(name, by: value, params: [.sampleRate(sampleRate)])
+    public func decrement(_ name: String, by value: Int = 1, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
+        return try self.count(name, -value, params)
     }
 
-    public func count(_ name: String, _ count: Int, params: DatadogStatsdCountMessage.Params = []) throws {
-        return try self.sendStat(DatadogStatsdCountMessage(name: name, delta: count, params: params))
-    }
-    public func count(_ name: String, _ count: Int, sampleRate: Double) throws {
-        DatadogStatsdMessageHelper.assertMetricSampleRate(sampleRate)
-        return try self.count(name, count, params: [.sampleRate(sampleRate)])
+    public func count(_ name: String, _ count: Int, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
+        return try self.metric(name, Double(count), .count, params)
     }
 
-    //
-    public func gauge(_ name: String, _ value: Double, params: DatadogStatsdGaugeMessage.Params = []) throws {
-        return try self.sendStat(DatadogStatsdGaugeMessage(name: name, delta: value, params: params))
-    }
-    public func gauge(_ name: String, _ value: Double, sampleRate: Double) throws {
-        DatadogStatsdMessageHelper.assertMetricSampleRate(sampleRate)
-        return try self.gauge(name, value, params: [.sampleRate(sampleRate)])
+    public func gauge(_ name: String, _ value: Double, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
+        return try self.metric(name, value, .gauge, params)
     }
 
-    //
-    public func histogram(_ name: String, _ value: Double, params: DatadogStatsdHistogramMessage.Params = []) throws {
-        return try self.sendStat(DatadogStatsdHistogramMessage(name: name, delta: value, params: params))
-    }
-    public func histogram(_ name: String, _ value: Double, sampleRate: Double) throws {
-        DatadogStatsdMessageHelper.assertMetricSampleRate(sampleRate)
-        return try self.histogram(name, value, params: [.sampleRate(sampleRate)])
+    public func histogram(_ name: String, _ value: Double, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
+        return try self.metric(name, value, .histogram, params)
     }
 
-    //
-    public func distribution(_ name: String, _ value: Double, params: DatadogStatsdDistributionMessage.Params = []) throws {
-        return try self.sendStat(DatadogStatsdDistributionMessage(name: name, delta: value, params: params))
-    }
-    public func distribution(_ name: String, _ value: Double, sampleRate: Double) throws {
-        DatadogStatsdMessageHelper.assertMetricSampleRate(sampleRate)
-        return try self.distribution(name, value, params: [.sampleRate(sampleRate)])
+    public func distribution(_ name: String, _ value: Double, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
+        return try self.metric(name, value, .distribution, params)
     }
 
-    //
-    public func timing(_ name: String, _ ms: Int, params: DatadogStatsdTimingMessage.Params = []) throws {
-        return try self.sendStat(DatadogStatsdTimingMessage(name: name, delta: ms, params: params))
-    }
-    public func timing(_ name: String, _ ms: Int, sampleRate: Double) throws {
-        DatadogStatsdMessageHelper.assertMetricSampleRate(sampleRate)
-        return try self.timing(name, ms, params: [.sampleRate(sampleRate)])
+    public func timing(_ name: String, _ ms: Int, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
+        return try self.metric(name, Double(ms), .timing, params)
     }
 
-    public func time(_ name: String, params: DatadogStatsdTimingMessage.Params = [], task: @escaping () throws -> ()) throws {
+    public func time(_ name: String, _ params: DatadogStatsdMetricMessage.Params? = nil, task: @escaping () throws -> ()) throws {
         let start = Date()
 
         do {
@@ -96,54 +64,41 @@ public struct DatadogStatsd {
         } catch {
             let end = Date()
             let ms = Int(((end.timeIntervalSince1970 - start.timeIntervalSince1970) * 1000).rounded(.toNearestOrAwayFromZero))
-            return try self.timing(name, ms, params: params)
+            return try self.timing(name, ms, params)
         }
 
         let end = Date()
         let ms = Int(((end.timeIntervalSince1970 - start.timeIntervalSince1970) * 1000).rounded(.toNearestOrAwayFromZero))
-        return try self.timing(name, ms, params: params)
+        return try self.timing(name, ms, params)
     }
-    public func time(_ name: String, sampleRate: Double, task: @escaping () throws -> ()) throws {
-        DatadogStatsdMessageHelper.assertMetricSampleRate(sampleRate)
-        return try self.time(name, params: [.sampleRate(sampleRate)], task: task)
+
+    public func set(_ name: String, _ value: Double, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
+        return try self.metric(name, value, .set, params)
+    }
+
+    private func metric(_ name: String, _ delta: Double, _ type: DatadogStatsdMetricMessageType, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
+        var name = name
+        if let namespace = namespace {
+            name.insert(contentsOf: namespace, at: name.startIndex)
+        }
+        return try self.sendStat(DatadogStatsdMetricMessage(name: name, delta: delta, type: type, params: params))
     }
 
     //
-    public func set(_ name: String, _ value: Double, params: DatadogStatsdSetMessage.Params = []) throws {
-        return try self.sendStat(DatadogStatsdSetMessage(name: name, delta: value, params: params))
-    }
-    public func set(_ name: String, _ value: Double, sampleRate: Double) throws {
-        DatadogStatsdMessageHelper.assertMetricSampleRate(sampleRate)
-        return try self.set(name, value, params: [.sampleRate(sampleRate)])
-    }
-
-    //
-    public func serviceCheck(_ name: String, _ status: DatadogStatsdServiceCheckMessageStatus, params: DatadogStatsdServiceCheckMessage.Params = []) throws {
+    public func serviceCheck(_ name: String, _ status: DatadogStatsdServiceCheckMessageStatus, params: DatadogStatsdServiceCheckMessage.Params? = nil) throws {
         return try self.sendStat(DatadogStatsdServiceCheckMessage(name: name, status: status, params: params))
     }
 
     //
-    public func event(_ title: String, _ text: String, params: DatadogStatsdEventMessage.Params = []) throws {
+    public func event(_ title: String, _ text: String, params: DatadogStatsdEventMessage.Params? = nil) throws {
         return try self.sendStat(DatadogStatsdEventMessage(title: title, text: text, params: params))
     }
 
     //
     private func sendStat<T>(_ message: T) throws where T: DatadogStatsdMessage {
-        return try self.sendStat0(message)
-    }
-
-    private func sendStat<T>(_ message: T) throws where T: DatadogStatsdMetricMessage, T: DatadogStatsdMessage {
-        var message = message
-        if let namespace = namespace {
-            message.updateParams(with: .prefix(namespace))
-        }
-        return try self.sendStat0(message)
-    }
-
-    private func sendStat0<T>(_ message: T) throws where T: DatadogStatsdMessage {
         var message = message
         if tags.count > 0 {
-            message.appendTagsParamValues(contentsOf: tags)
+            message.params?.tags?.formUnion(tags)
         }
 
         let text = try message.content()

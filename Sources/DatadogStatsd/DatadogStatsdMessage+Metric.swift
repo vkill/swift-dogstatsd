@@ -1,40 +1,38 @@
-protocol DatadogStatsdMetricMessage {
-    associatedtype Delta
+public struct DatadogStatsdMetricMessage: DatadogStatsdMessage {
 
-    var name: String { get }
-    var delta: Delta { get }
-    var type: DatadogStatsdMetricMessageType { get }
+    public typealias Params = DatadogStatsdMetricMessageParams
 
-    typealias Param = DatadogStatsdMetricMessageParam
-    typealias Params = DatadogStatsdMetricMessageParams
-    var params: Params { get set }
+    let name: String
+    let delta: Double
+    let type: DatadogStatsdMetricMessageType
+    var params: Params?
 
-    func deltaAsString() -> String
-}
+    init(name: String, delta: Double, type: DatadogStatsdMetricMessageType, params: Params? = nil) {
+        self.name = name
+        self.delta = delta
+        self.type = type
+        self.params = params
+    }
 
-extension DatadogStatsdMetricMessage {
     func content() throws -> String {
         let escapedName = DatadogStatsdMessageHelper.escapeMetricName(name)
 
         var string = "\(escapedName):\(self.deltaAsString())\(DatadogStatsdMessageHelper.PIPE)\(type.rawValue)"
 
-        for param in params.sorted(by: { $0.hashValue < $1.hashValue }) {
-            switch param {
-            case .sampleRate(let sampleRate):
-                DatadogStatsdMessageHelper.assertMetricSampleRate(sampleRate)
-
+        if let params = params {
+            if let sampleRate = params.sampleRate {
                 guard sampleRate == 1 || DatadogStatsdMessageHelper.rand() < sampleRate else {
                     return ""
                 }
 
-                if sampleRate != 1 {
+                if sampleRate < 1 {
                     string.append(contentsOf: "\(DatadogStatsdMessageHelper.PIPE)@\(sampleRate)")
                 }
-            case .prefix(let prefix):
-                string.insert(contentsOf: "\(prefix)", at: string.startIndex)
-            case .tags(let tags):
-                if let tagsString = DatadogStatsdMessageHelper.tagsAsString(tags) {
-                    string.append(contentsOf: "\(DatadogStatsdMessageHelper.PIPE)#\(tagsString)")
+            }
+
+            if let tags = params.tags {
+                if let value = DatadogStatsdMessageHelper.tagsAsString(tags) {
+                    string.append(contentsOf: "\(DatadogStatsdMessageHelper.PIPE)#\(value)")
                 }
             }
         }
@@ -42,25 +40,10 @@ extension DatadogStatsdMetricMessage {
         return string
     }
 
-    mutating func updateParams(with newParam: Param) {
-        self.params.update(with: newParam)
+    private func deltaAsString() -> String {
+        return "\(delta)"
     }
 
-    mutating func appendTagsParamValues(contentsOf newValues: DatadogStatsdMessageTags) {
-        guard !newValues.isEmpty else {
-            return
-        }
-
-        self.params.forEach({ param in
-            if case .tags(var tags) = param {
-                tags.formUnion(newValues)
-                self.updateParams(with: .tags(tags))
-                return
-            }
-        })
-
-        self.updateParams(with: .tags(newValues))
-    }
 }
 
 enum DatadogStatsdMetricMessageType: String {
@@ -72,34 +55,22 @@ enum DatadogStatsdMetricMessageType: String {
     case timing       = "ms"
 }
 
-public enum DatadogStatsdMetricMessageParam: DatadogStatsdMessageParam {
-    case sampleRate(Double)
-    case prefix(String)
-    case tags(DatadogStatsdMessageTags)
+public struct DatadogStatsdMetricMessageParams: DatadogStatsdMessageParams {
+    let sampleRate: Double?
+    var tags: DatadogStatsdMessageTags?
 
-    #if swift(>=4.2)
-    func hash(into hasher: inout Hasher) {
-        switch self {
-        case .sampleRate:
-            1.hash(into: &hasher)
-        case .prefix:
-            2.hash(into: &hasher)
-        case .tags:
-            99.hash(into: &hasher)
+    public init(
+        sampleRate: Double? = nil,
+        tags: DatadogStatsdMessageTags? = nil
+    ) {
+        if let sampleRate = sampleRate {
+            assert((0.0...1.0).contains(sampleRate), "sampleRate require to be in range 0.0...1.0")
         }
+        self.sampleRate = sampleRate
+        self.tags = tags
     }
-    #else
-    public var hashValue: Int {
-        switch self {
-        case .sampleRate:
-            return 1.hashValue
-        case .prefix:
-            return 2.hashValue
-        case .tags:
-            return 99.hashValue
-        }
+
+    public static func sampleRate(_ value: Double) -> DatadogStatsdMetricMessageParams {
+        return self.init(sampleRate: value)
     }
-    #endif
 }
-
-public typealias DatadogStatsdMetricMessageParams = Set<DatadogStatsdMetricMessageParam>

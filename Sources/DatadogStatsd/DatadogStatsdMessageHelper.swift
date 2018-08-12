@@ -59,9 +59,4 @@ struct DatadogStatsdMessageHelper {
         escapedName = escapedName.replacingOccurrences(of: "|", with: self.UNDERSCORE)
         return escapedName.replacingOccurrences(of: "@", with: self.UNDERSCORE)
     }
-
-    //
-    static func assertMetricSampleRate(_ sampleRate: Double) {
-        assert((0.0...1.0).contains(sampleRate), "sampleRate require to be in range 0.0...1.0")
-    }
 }
