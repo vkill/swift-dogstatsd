@@ -37,23 +37,32 @@ public struct DatadogStatsd {
     }
 
     public func count(_ name: String, _ count: Int, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
-        return try self.metric(name, Double(count), .count, params)
+        return try self.metric(name, count, .count, params)
     }
 
+    public func gauge(_ name: String, _ value: Int, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
+        return try self.metric(name, value, .gauge, params)
+    }
     public func gauge(_ name: String, _ value: Double, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
         return try self.metric(name, value, .gauge, params)
     }
 
+    public func histogram(_ name: String, _ value: Int, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
+        return try self.metric(name, value, .histogram, params)
+    }
     public func histogram(_ name: String, _ value: Double, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
         return try self.metric(name, value, .histogram, params)
     }
 
+    public func distribution(_ name: String, _ value: Int, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
+        return try self.metric(name, value, .distribution, params)
+    }
     public func distribution(_ name: String, _ value: Double, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
         return try self.metric(name, value, .distribution, params)
     }
 
-    public func timing(_ name: String, _ ms: Int, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
-        return try self.metric(name, Double(ms), .timing, params)
+    public func timing(_ name: String, _ milliseconds: Int, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
+        return try self.metric(name, milliseconds, .timing, params)
     }
 
     public func time(_ name: String, _ params: DatadogStatsdMetricMessage.Params? = nil, task: @escaping () throws -> ()) throws {
@@ -72,11 +81,14 @@ public struct DatadogStatsd {
         return try self.timing(name, ms, params)
     }
 
+    public func set(_ name: String, _ value: Int, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
+        return try self.metric(name, value, .set, params)
+    }
     public func set(_ name: String, _ value: Double, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
         return try self.metric(name, value, .set, params)
     }
 
-    private func metric(_ name: String, _ delta: Double, _ type: DatadogStatsdMetricMessageType, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
+    private func metric(_ name: String, _ delta: DatadogStatsdMetricMessageDelta, _ type: DatadogStatsdMetricMessageType, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
         var name = name
         if let namespace = namespace {
             name.insert(contentsOf: namespace, at: name.startIndex)

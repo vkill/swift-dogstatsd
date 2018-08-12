@@ -3,11 +3,11 @@ public struct DatadogStatsdMetricMessage: DatadogStatsdMessage {
     public typealias Params = DatadogStatsdMetricMessageParams
 
     let name: String
-    let delta: Double
+    let delta: DatadogStatsdMetricMessageDelta
     let type: DatadogStatsdMetricMessageType
     var params: Params?
 
-    init(name: String, delta: Double, type: DatadogStatsdMetricMessageType, params: Params? = nil) {
+    init(name: String, delta: DatadogStatsdMetricMessageDelta, type: DatadogStatsdMetricMessageType, params: Params? = nil) {
         self.name = name
         self.delta = delta
         self.type = type
@@ -41,10 +41,21 @@ public struct DatadogStatsdMetricMessage: DatadogStatsdMessage {
     }
 
     private func deltaAsString() -> String {
-        return String(format: "%g", delta)
+        switch delta {
+        case let value as Int:
+            return "\(value)"
+        case let value as Double:
+            // return String(format: "%g", value)
+            return "\(value)"
+        default:
+            fatalError()
+        }
     }
-
 }
+
+public protocol DatadogStatsdMetricMessageDelta {}
+extension Int: DatadogStatsdMetricMessageDelta {}
+extension Double: DatadogStatsdMetricMessageDelta {}
 
 enum DatadogStatsdMetricMessageType: String {
     case count        = "c"
