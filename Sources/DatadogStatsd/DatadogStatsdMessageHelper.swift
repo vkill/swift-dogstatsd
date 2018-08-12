@@ -11,7 +11,12 @@ struct DatadogStatsdMessageHelper {
     static let DOUBLE_COLON = "::"
     static let UNDERSCORE = "_"
 
-    static func rand() -> Double {
+    static var fixedMetricSampleRate: Double?
+    static func randMetricSampleRate() -> Double {
+        if let fixedMetricSampleRate = fixedMetricSampleRate {
+            return fixedMetricSampleRate
+        }
+
         #if swift(>=4.2)
         return Double.random(in: 0...1)
         #else
@@ -36,7 +41,6 @@ struct DatadogStatsdMessageHelper {
         return tags.joined(separator: self.COMMA)
     }
 
-    //
     static func escapeEventTitle(_ string: String) -> String {
         return self.escapeNewLines(string)
     }
@@ -45,14 +49,12 @@ struct DatadogStatsdMessageHelper {
         return self.escapeNewLines(string)
     }
 
-    //
     static func escapeServiceCheckMessage(_ string: String) -> String {
         var escapedMessage = self.removePipes(string)
         escapedMessage = self.escapeNewLines(escapedMessage)
         return escapedMessage.replacingOccurrences(of: "m:", with: "m\\:")
     }
 
-    //
     static func escapeMetricName(_ string: String) -> String {
         var escapedName = string.replacingOccurrences(of: self.DOUBLE_COLON, with: self.DOT)
         escapedName = escapedName.replacingOccurrences(of: ":", with: self.UNDERSCORE)

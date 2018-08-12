@@ -21,7 +21,7 @@ public struct DatadogStatsdMetricMessage: DatadogStatsdMessage {
 
         if let params = params {
             if let sampleRate = params.sampleRate {
-                guard sampleRate == 1 || DatadogStatsdMessageHelper.rand() < sampleRate else {
+                guard sampleRate == 1 || DatadogStatsdMessageHelper.randMetricSampleRate() < sampleRate else {
                     return ""
                 }
 
