@@ -41,7 +41,7 @@ public struct DatadogStatsdMetricMessage: DatadogStatsdMessage {
     }
 
     private func deltaAsString() -> String {
-        return "\(delta)"
+        return String(format: "%g", delta)
     }
 
 }
