@@ -106,13 +106,13 @@ public struct DatadogStatsd {
     }
 
     //
-    public func serviceCheck(_ name: String, _ status: DatadogStatsdServiceCheckMessageStatus, params: DatadogStatsdServiceCheckMessage.Params? = nil) throws {
+    public func serviceCheck(_ name: String, _ status: DatadogStatsdServiceCheckMessageStatus, _ params: DatadogStatsdServiceCheckMessage.Params? = nil) throws {
         let message = DatadogStatsdServiceCheckMessage(name: name, status: status, params: params)
         return try self.sendStat(message)
     }
 
     //
-    public func event(_ title: String, _ text: String, params: DatadogStatsdEventMessage.Params? = nil) throws {
+    public func event(_ title: String, _ text: String, _ params: DatadogStatsdEventMessage.Params? = nil) throws {
         let message = DatadogStatsdEventMessage(title: title, text: text, params: params)
         return try self.sendStat(message)
     }
