@@ -7,6 +7,8 @@ public struct DatadogStatsdMetricMessage: DatadogStatsdMessage {
     let type: DatadogStatsdMetricMessageType
     var params: Params?
 
+    var utils: DatadogStatsdUtils = DatadogStatsdGenericUtils()
+
     init(name: String, delta: DatadogStatsdMetricMessageDelta, type: DatadogStatsdMetricMessageType, params: Params? = nil) {
         self.name = name
         self.delta = delta
@@ -21,7 +23,7 @@ public struct DatadogStatsdMetricMessage: DatadogStatsdMessage {
 
         if let params = params {
             if let sampleRate = params.sampleRate {
-                guard sampleRate == 1 || DatadogStatsdMessageHelper.randMetricSampleRate() < sampleRate else {
+                guard sampleRate == 1 || utils.rand() < sampleRate else {
                     return ""
                 }
 

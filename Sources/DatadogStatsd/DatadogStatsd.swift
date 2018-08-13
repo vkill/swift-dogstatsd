@@ -5,16 +5,18 @@ public struct DatadogStatsd {
     private let port: Int
 
     private let connection: DatadogStatsdConnection
+    private let utils: DatadogStatsdUtils
 
     private let namespace: String?
-    private let tags: DatadogStatsdMessageTags
+    private let tags: DatadogStatsdMessageTags?
 
     public init(
         host: String = "127.0.0.1",
         port: Int = 8125,
         connection: DatadogStatsdConnection,
+        utils: DatadogStatsdUtils? = nil,
         namespace: String? = nil,
-        tags: DatadogStatsdMessageTags = []
+        tags: DatadogStatsdMessageTags? = nil
     ) {
         assert((0...65535).contains(port), "port require to be in range 0...65535")
 
@@ -22,6 +24,11 @@ public struct DatadogStatsd {
         self.port = port
 
         self.connection = connection
+        if let utils = utils {
+            self.utils = utils
+        } else {
+            self.utils = DatadogStatsdGenericUtils()
+        }
 
         self.namespace = namespace
         self.tags = tags
@@ -93,23 +100,27 @@ public struct DatadogStatsd {
         if let namespace = namespace {
             name.insert(contentsOf: namespace, at: name.startIndex)
         }
-        return try self.sendStat(DatadogStatsdMetricMessage(name: name, delta: delta, type: type, params: params))
+        var message = DatadogStatsdMetricMessage(name: name, delta: delta, type: type, params: params)
+        message.utils = utils
+        return try self.sendStat(message)
     }
 
     //
     public func serviceCheck(_ name: String, _ status: DatadogStatsdServiceCheckMessageStatus, params: DatadogStatsdServiceCheckMessage.Params? = nil) throws {
-        return try self.sendStat(DatadogStatsdServiceCheckMessage(name: name, status: status, params: params))
+        let message = DatadogStatsdServiceCheckMessage(name: name, status: status, params: params)
+        return try self.sendStat(message)
     }
 
     //
     public func event(_ title: String, _ text: String, params: DatadogStatsdEventMessage.Params? = nil) throws {
-        return try self.sendStat(DatadogStatsdEventMessage(title: title, text: text, params: params))
+        let message = DatadogStatsdEventMessage(title: title, text: text, params: params)
+        return try self.sendStat(message)
     }
 
     //
     private func sendStat<T>(_ message: T) throws where T: DatadogStatsdMessage {
         var message = message
-        if tags.count > 0 {
+        if let tags = tags, tags.count > 0 {
             message.params?.tags?.formUnion(tags)
         }
 

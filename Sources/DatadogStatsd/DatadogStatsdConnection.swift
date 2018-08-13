@@ -5,7 +5,7 @@ public protocol DatadogStatsdConnection {
 public struct DatadogStatsdPrinterConnection: DatadogStatsdConnection {
     public func write(_ text: String, to: (host: String, port: Int)) throws {
         Swift.print("""
-        sending [[[\(text)]]] to \(to.host):\(to.port)
+        sending "\(text)" to \(to.host):\(to.port)
         """)
     }
 }

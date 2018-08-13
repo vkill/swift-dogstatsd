@@ -1,7 +1,3 @@
-import func Foundation.drand48
-import func Foundation.srand48
-import func Foundation.time
-
 struct DatadogStatsdMessageHelper {
     static let NEW_LINE = "\n"
     static let ESC_NEW_LINE = "\\n"
@@ -10,20 +6,6 @@ struct DatadogStatsdMessageHelper {
     static let DOT = "."
     static let DOUBLE_COLON = "::"
     static let UNDERSCORE = "_"
-
-    static var fixedMetricSampleRate: Double?
-    static func randMetricSampleRate() -> Double {
-        if let fixedMetricSampleRate = fixedMetricSampleRate {
-            return fixedMetricSampleRate
-        }
-
-        #if swift(>=4.2)
-        return Double.random(in: 0...1)
-        #else
-        srand48(Int(time(nil)))
-        return drand48()
-        #endif
-    }
 
     static func escapeNewLines(_ string: String) -> String {
         return string.replacingOccurrences(of: self.NEW_LINE, with: self.ESC_NEW_LINE)
