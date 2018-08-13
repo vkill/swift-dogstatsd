@@ -9,6 +9,6 @@ protocol DatadogStatsdMessage {
 public typealias DatadogStatsdMessageTags = Set<String>
 
 //
-protocol DatadogStatsdMessageParams: Hashable {
+protocol DatadogStatsdMessageParams {
     var tags: DatadogStatsdMessageTags? { get set }
 }
