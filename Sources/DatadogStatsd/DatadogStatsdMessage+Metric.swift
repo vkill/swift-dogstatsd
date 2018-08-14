@@ -77,7 +77,7 @@ public struct DatadogStatsdMetricMessageParams: DatadogStatsdMessageParams {
         tags: DatadogStatsdMessageTags? = nil
     ) {
         if let sampleRate = sampleRate {
-            assert((0.0...1.0).contains(sampleRate), "sampleRate require to be in range 0.0...1.0")
+            assert((0.0...1.0).contains(sampleRate), "sampleRate must be in range 0.0...1.0")
         }
         self.sampleRate = sampleRate
         self.tags = tags

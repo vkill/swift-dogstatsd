@@ -18,7 +18,7 @@ public struct DatadogStatsd {
         namespace: String? = nil,
         tags: DatadogStatsdMessageTags? = nil
     ) {
-        assert((0...65535).contains(port), "port require to be in range 0...65535")
+        assert((0...65535).contains(port), "port must be in range 0...65535")
 
         self.host = host
         self.port = port
@@ -69,6 +69,7 @@ public struct DatadogStatsd {
     }
 
     public func timing(_ name: String, _ milliseconds: Int, _ params: DatadogStatsdMetricMessage.Params? = nil) throws {
+        assert(milliseconds >= 0, "milliseconds must be greater than or equal to 0")
         return try self.metric(name, milliseconds, .timing, params)
     }
 
@@ -77,10 +78,6 @@ public struct DatadogStatsd {
 
         do {
             try task()
-        } catch {
-            let end = Date()
-            let ms = Int(((end.timeIntervalSince1970 - start.timeIntervalSince1970) * 1000).rounded(.toNearestOrAwayFromZero))
-            return try self.timing(name, ms, params)
         }
 
         let end = Date()
