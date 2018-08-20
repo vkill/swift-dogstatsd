@@ -10,7 +10,9 @@ final class DatadogStatsdTests: XCTestCase {
 
         for _ in (1...10) {
             let name = "test"
-            let status = DatadogStatsdServiceCheckMessageStatus.ok
+            guard let status = DatadogStatsdServiceCheckMessageStatus.allCases.randomElement() else {
+                fatalError()
+            }
 
             // sends with only name and status
             try statsd.serviceCheck(name, status)
@@ -43,5 +45,11 @@ final class DatadogStatsdTests: XCTestCase {
             XCTAssertEqual(to.port, port)
             self.recv.append(text)
         }
+    }
+}
+
+extension DatadogStatsdServiceCheckMessageStatus {
+    static var allCases: [DatadogStatsdServiceCheckMessageStatus] {
+        return [.ok, .warning, .critical, .unknown]
     }
 }
