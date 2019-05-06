@@ -1,6 +1,6 @@
 # DatadogStatsd
 
-[Example](Example/Sources/DatadogStatsdExample)
+[Example](Example/Sources/DatadogStatsdExample/main.swift)
 
 ## Ref
 
