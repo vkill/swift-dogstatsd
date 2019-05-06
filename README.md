@@ -1,6 +1,6 @@
 # DatadogStatsd
 
-A description of this package.
+[Example](Example/Sources/DatadogStatsdExample)
 
 ## Ref
 
